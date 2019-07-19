@@ -1,4 +1,5 @@
-﻿using UIKit;
+﻿using System;
+using UIKit;
 
 namespace Xamarin.Forms.ControlGallery.iOS
 {
@@ -6,7 +7,14 @@ namespace Xamarin.Forms.ControlGallery.iOS
 	{
 		static void Main(string[] args)
 		{
-			UIApplication.Main(args, typeof(CustomApplication), typeof(AppDelegate));
+			try
+			{
+				UIApplication.Main(args, typeof(CustomApplication), typeof(AppDelegate));
+			}
+			catch (Exception e)
+			{
+				Console.Write(e.StackTrace);
+			}
 		}
 	}
 }

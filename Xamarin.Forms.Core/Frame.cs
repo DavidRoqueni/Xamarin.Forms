@@ -16,6 +16,17 @@ namespace Xamarin.Forms
 
 		public static readonly BindableProperty HasShadowProperty = BindableProperty.Create("HasShadow", typeof(bool), typeof(Frame), true);
 
+		public static readonly BindableProperty ShadowBlurProperty = BindableProperty.Create(nameof(ShadowBlur), typeof(double), typeof(Frame), 0d);
+
+		public static readonly BindableProperty ShadowColorProperty = BindableProperty.Create(nameof(ShadowColor), typeof(Color), typeof(Frame), Color.Black);
+
+		public static readonly BindableProperty ShadowOpacityProperty = BindableProperty.Create(nameof(ShadowOpacity), typeof(double), typeof(Frame), 0.8d,
+									validateValue: (bindable,value) => ((double)value >=0) && ((double)value <= 1));
+
+		public static readonly BindableProperty ShadowOffsetXProperty = BindableProperty.Create(nameof(ShadowOffsetX), typeof(float), typeof(Frame), 0f);
+
+		public static readonly BindableProperty ShadowOffsetYProperty = BindableProperty.Create(nameof(ShadowOffsetY), typeof(float), typeof(Frame), 0f);
+
 		public static readonly BindableProperty CornerRadiusProperty = BindableProperty.Create(nameof(CornerRadius), typeof(float), typeof(Frame), -1.0f,
 									validateValue: (bindable, value) => ((float)value) == -1.0f || ((float)value) >= 0f);
 
@@ -35,6 +46,34 @@ namespace Xamarin.Forms
 		{
 			get { return (bool)GetValue(HasShadowProperty); }
 			set { SetValue(HasShadowProperty, value); }
+		}
+
+		public double ShadowBlur
+		{
+			get { return (double)GetValue(ShadowBlurProperty); }
+			set { SetValue(ShadowBlurProperty, value); }
+		}
+
+		public Color ShadowColor
+		{
+			get { return (Color)GetValue(ShadowColorProperty); }
+			set { SetValue(ShadowColorProperty, value); }
+		}
+
+		public double ShadowOpacity
+		{
+			get { return (double)GetValue(ShadowOpacityProperty); }
+			set { SetValue(ShadowOpacityProperty, value); }
+		}
+		public float ShadowOffsetX
+		{
+			get { return (float)GetValue(ShadowOpacityProperty); }
+			set { SetValue(ShadowOpacityProperty, value); }
+		}
+		public float ShadowOffsetY
+		{
+			get { return (float)GetValue(ShadowOpacityProperty); }
+			set { SetValue(ShadowOpacityProperty, value); }
 		}
 
 		[Obsolete("OutlineColor is obsolete as of version 3.0.0. Please use BorderColor instead.")]

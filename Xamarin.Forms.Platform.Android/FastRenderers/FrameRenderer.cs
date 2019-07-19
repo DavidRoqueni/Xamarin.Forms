@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using Android.Content;
+using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.Support.V4.View;
 using Android.Support.V7.Widget;
@@ -15,10 +16,18 @@ namespace Xamarin.Forms.Platform.Android.FastRenderers
 		float _defaultElevation = -1f;
 		float _defaultCornerRadius = -1f;
 		int? _defaultLabelFor;
-
+		float _defaultShadowRadius = 0f;
+		float _defaultShadowDistanceX = 0f;
+		float _defaultShadowDistanceY = 0f;
+		Paint _paint = new Paint(PaintFlags.AntiAlias) { Dither = true, FilterBitmap=true };
+		Bitmap _bitmap;
+		Canvas _canvas = new Canvas();
+		Rect _bounds = new Rect();
+		bool _invalidateShadow = true;
 		bool _disposed;
 		Frame _element;
 		GradientDrawable _backgroundDrawable;
+		AColor _color;
 
 		VisualElementPackager _visualElementPackager;
 		VisualElementTracker _visualElementTracker;
@@ -29,8 +38,11 @@ namespace Xamarin.Forms.Platform.Android.FastRenderers
 		public event EventHandler<VisualElementChangedEventArgs> ElementChanged;
 		public event EventHandler<PropertyChangedEventArgs> ElementPropertyChanged;
 
+
 		public FrameRenderer(Context context) : base(context)
 		{
+			SetWillNotDraw(false);
+			SetLayerType(LayerType.Hardware, _paint);
 			_visualElementRenderer = new VisualElementRenderer(this);
 		}
 
@@ -236,6 +248,15 @@ namespace Xamarin.Forms.Platform.Android.FastRenderers
 				UpdateClippedToBounds();
 		}
 
+		void CreateColor()
+		{
+			_color = AColor.Argb(
+				(int)Element.ShadowOpacity * 255,
+				(int)Element.ShadowColor.R * 255,
+				(int)Element.ShadowColor.G * 255,
+				(int)Element.ShadowColor.B * 255);
+		}
+
 		void UpdateClippedToBounds() => this.SetClipToOutline(Element.IsClippedToBounds);
 
 		void UpdateBackgroundColor()
@@ -264,7 +285,7 @@ namespace Xamarin.Forms.Platform.Android.FastRenderers
 		{
 			if (_disposed)
 				return;
-				
+
 			float elevation = _defaultElevation;
 
 			if (elevation == -1f)
@@ -294,6 +315,64 @@ namespace Xamarin.Forms.Platform.Android.FastRenderers
 				cornerRadius = Context.ToPixels(cornerRadius);
 
 			_backgroundDrawable.SetCornerRadius(cornerRadius);
+		}
+
+		protected override void DispatchDraw(Canvas canvas)
+		{
+			if (Element.HasShadow &&
+				(Element.ShadowOpacity != .8f
+				|| Element.ShadowColor != Color.Black
+				|| Element.ShadowBlur != 0f
+				|| Element.ShadowOffsetX != 0f
+				|| Element.ShadowOffsetY != 0f))
+			{
+				if (_invalidateShadow)
+				{
+					if (_bounds.Width() != 0 && _bounds.Height() != 0)
+					{
+						_bitmap = Bitmap.CreateBitmap(_bounds.Width(), _bounds.Height(), Bitmap.Config.Argb8888);
+						_canvas.SetBitmap(_bitmap);
+						_invalidateShadow = false;
+						base.DispatchDraw(_canvas);
+						Bitmap extractedAlpha = _bitmap.ExtractAlpha();
+						_canvas.DrawColor(AColor.Transparent, PorterDuff.Mode.Clear);
+						_paint.Color = _color;
+						_canvas.DrawBitmap(extractedAlpha, Element.ShadowOffsetX, Element.ShadowOffsetY, _paint);
+						extractedAlpha.Recycle();
+					}
+					else
+					{
+						_bitmap = Bitmap.CreateBitmap(1, 1, Bitmap.Config.Rgb565);
+					}
+				}
+				_color.A = 255;
+				_paint.Color = _color;
+				if (canvas != null && _bitmap != null && !_bitmap.IsRecycled)
+					canvas.DrawBitmap(_bitmap, 0.0f, 0.0f, _paint);
+			}
+			base.DispatchDraw(canvas);
+		}
+
+		protected override void OnDetachedFromWindow()
+		{
+			base.OnDetachedFromWindow();
+			if (_bitmap != null)
+			{
+				_bitmap.Recycle();
+				_bitmap = null;
+			}
+		}
+
+		protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
+		{
+			base.OnMeasure(widthMeasureSpec, heightMeasureSpec);
+			_bounds.Set(0, 0, MeasuredWidth, MeasuredHeight);
+		}
+
+		public override void RequestLayout()
+		{
+			_invalidateShadow = true;
+			base.RequestLayout();
 		}
 	}
 }
