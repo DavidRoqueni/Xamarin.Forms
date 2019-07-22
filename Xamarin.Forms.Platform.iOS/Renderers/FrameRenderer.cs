@@ -33,7 +33,9 @@ namespace Xamarin.Forms.Platform.iOS
 
 		void SetupLayer()
 		{
-			float cornerRadius = Element.CornerRadius;
+			var cornerRadius = Element.CornerRadius;
+			var shadowOffsetX = Element.ShadowOffsetX;
+			var shadowOffsetY = Element.ShadowOffsetY;
 
 			if (cornerRadius == -1f)
 				cornerRadius = 5f; // default corner radius
@@ -45,14 +47,22 @@ namespace Xamarin.Forms.Platform.iOS
 			else
 				Layer.BackgroundColor = Element.BackgroundColor.ToCGColor();
 
+			if (shadowOffsetX == 0f && shadowOffsetY == 0f)
+			{
+				shadowOffsetX = 2.5f;
+				shadowOffsetY = 2.5f;
+			}
+
+
 			if (Element.HasShadow)
 			{
 				Layer.ShadowRadius = (float)Element.ShadowBlur;
 				Layer.ShadowColor = Element.ShadowColor.ToCGColor();
 				Layer.ShadowOpacity = (float)Element.ShadowOpacity;
-				Layer.ShadowOffset = new CGSize(Element.ShadowOffsetX,Element.ShadowOffsetY);
+				Layer.ShadowOffset = new CGSize(shadowOffsetX,shadowOffsetY);
 				Layer.MasksToBounds = false;
-				Layer.ShadowPath = CGPath.FromRect(Layer.Bounds);
+				//Layer.ShadowPath = CGPath.FromRect(Layer.Bounds);
+				Layer.ShadowPath = UIBezierPath.FromRoundedRect(Layer.Bounds, cornerRadius).CGPath;
 			}
 			else
 				Layer.ShadowOpacity = 0;
